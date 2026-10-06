@@ -1,4 +1,4 @@
-package com.sportreserve.sport_reserve;
+package com.sportreserve;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

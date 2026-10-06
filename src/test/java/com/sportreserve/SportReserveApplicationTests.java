@@ -1,4 +1,4 @@
-package com.sportreserve.sport_reserve;
+package com.sportreserve;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
