@@ -28,7 +28,6 @@ public class ReservaRequest {
     @Positive(message = "El id del responsable debe ser positivo")
     private Long responsableId;
 
-    @NotNull(message = "El rol del responsable es obligatorio")
     private RolParticipacion rolResponsable;
 
     public LocalDate getFecha() {

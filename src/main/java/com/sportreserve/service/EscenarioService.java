@@ -42,16 +42,19 @@ public class EscenarioService {
         return toResponse(guardado);
     }
 
+    @Transactional(readOnly = true)
     public EscenarioResponse buscarPorId(Long id) {
         Escenario escenario = obtenerEntidadPorId(id);
         return toResponse(escenario);
     }
 
+    @Transactional(readOnly = true)
     public Escenario obtenerEntidadPorId(Long id) {
         return escenarioRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Escenario", id));
     }
 
+    @Transactional(readOnly = true)
     public List<EscenarioResponse> listarTodos() {
         return escenarioRepository.findAll().stream()
                 .map(this::toResponse)

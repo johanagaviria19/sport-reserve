@@ -135,6 +135,63 @@ public class ReservaService {
     }
 
     @Transactional
+    public ReservaResponse confirmar(Long id) {
+        Reserva reserva = reservaRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Reserva", id));
+
+        if (reserva.getEstado() != EstadoReserva.PENDIENTE) {
+            throw new ReservaInvalidaException(
+                    String.format("Solo se puede confirmar una reserva en estado PENDIENTE. Estado actual: %s",
+                            reserva.getEstado()));
+        }
+
+        reserva.setEstado(EstadoReserva.CONFIRMADA);
+        Reserva reservaGuardada = reservaRepository.save(reserva);
+
+        eventPublisher.publishEvent(new ReservaEvent(reservaGuardada.getId(), reservaGuardada.getEstado()));
+
+        return toResponse(reservaGuardada);
+    }
+
+    @Transactional
+    public ReservaResponse marcarEnUso(Long id) {
+        Reserva reserva = reservaRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Reserva", id));
+
+        if (reserva.getEstado() != EstadoReserva.CONFIRMADA) {
+            throw new ReservaInvalidaException(
+                    String.format("Solo se puede marcar en uso una reserva en estado CONFIRMADA. Estado actual: %s",
+                            reserva.getEstado()));
+        }
+
+        reserva.setEstado(EstadoReserva.EN_USO);
+        Reserva reservaGuardada = reservaRepository.save(reserva);
+
+        eventPublisher.publishEvent(new ReservaEvent(reservaGuardada.getId(), reservaGuardada.getEstado()));
+
+        return toResponse(reservaGuardada);
+    }
+
+    @Transactional
+    public ReservaResponse finalizar(Long id) {
+        Reserva reserva = reservaRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Reserva", id));
+
+        if (reserva.getEstado() != EstadoReserva.EN_USO) {
+            throw new ReservaInvalidaException(
+                    String.format("Solo se puede finalizar una reserva en estado EN_USO. Estado actual: %s",
+                            reserva.getEstado()));
+        }
+
+        reserva.setEstado(EstadoReserva.FINALIZADA);
+        Reserva reservaGuardada = reservaRepository.save(reserva);
+
+        eventPublisher.publishEvent(new ReservaEvent(reservaGuardada.getId(), reservaGuardada.getEstado()));
+
+        return toResponse(reservaGuardada);
+    }
+
+    @Transactional
     public ReservaResponse cancelar(Long id) {
         Reserva reserva = reservaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Reserva", id));

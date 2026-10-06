@@ -59,6 +59,7 @@ public class PagoService {
         return toResponse(pago);
     }
 
+    @Transactional(readOnly = true)
     public PagoResponse consultarPagoReserva(Long reservaId) {
         Reserva reserva = reservaRepository.findById(reservaId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Reserva", reservaId));
@@ -71,6 +72,7 @@ public class PagoService {
         return toResponse(pago);
     }
 
+    @Transactional(readOnly = true)
     public BigDecimal calcularSaldoPendiente(Long reservaId) {
         Reserva reserva = reservaRepository.findById(reservaId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Reserva", reservaId));

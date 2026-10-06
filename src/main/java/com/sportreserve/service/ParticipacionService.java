@@ -107,7 +107,8 @@ public class ParticipacionService {
         Reserva reserva = reservaRepository.findById(reservaId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Reserva", reservaId));
 
-        if (reserva.getEstado() == EstadoReserva.EN_USO
+        if (reserva.getEstado() == EstadoReserva.CANCELADA
+                || reserva.getEstado() == EstadoReserva.EN_USO
                 || reserva.getEstado() == EstadoReserva.FINALIZADA) {
             throw new ReservaInvalidaException(
                     String.format("No se puede eliminar participante de reserva en estado %s", reserva.getEstado()));

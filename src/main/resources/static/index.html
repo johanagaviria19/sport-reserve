@@ -1,0 +1,1098 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>SportReserve · Gestión deportiva</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          ink: '#0B0F14',
+          panel: '#111827',
+          line: '#1F2937',
+          accent: '#FF6B1A',
+          accent2: '#FF8A3C',
+          ok: '#10B981',
+          warn: '#F59E0B',
+          bad: '#EF4444',
+          dim: '#94A3B8',
+        },
+        fontFamily: {
+          sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial'],
+          mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo'],
+        }
+      }
+    }
+  }
+</script>
+<style>
+  :root { color-scheme: dark; }
+  html, body { height: 100%; }
+  body { background: #06080C; color: #E5E7EB; }
+  .scrollbar-thin::-webkit-scrollbar { width: 8px; height: 8px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: #1F2937; border-radius: 999px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #374151; }
+  .tab-btn.active { background: #FF6B1A; color: #0B0F14; font-weight: 600; }
+  .tab-btn:not(.active):hover { background: #1F2937; color: #F9FAFB; }
+  .panel { background: #0B0F14; border: 1px solid #1F2937; }
+  .section { opacity: 0; transform: translateY(8px); transition: opacity .22s ease, transform .22s ease; }
+  .section.show { opacity: 1; transform: none; }
+  .chip { font: 500 11px/1 ui-monospace, Menlo, monospace; padding: 3px 8px; border-radius: 999px; border: 1px solid transparent; letter-spacing: .02em; }
+  .row-hover:hover { background: #0E141B; }
+  .input, .select { background: #0E141B; border: 1px solid #1F2937; color: #F3F4F6; border-radius: 8px; padding: 8px 10px; font-size: 14px; width: 100%; transition: border-color .15s, box-shadow .15s; }
+  .input:focus, .select:focus { outline: none; border-color: #FF6B1A; box-shadow: 0 0 0 3px rgba(255,107,26,.18); }
+  .label { font: 600 12px/1 ui-sans-serif; color: #94A3B8; letter-spacing: .02em; text-transform: uppercase; margin-bottom: 6px; display: block; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 8px; font: 600 13px/1 ui-sans-serif; transition: transform .12s, background .15s, color .15s, border-color .15s, box-shadow .15s; user-select: none; cursor: pointer; white-space: nowrap; }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: #FF6B1A; color: #0B0F14; }
+  .btn-primary:hover { background: #FF8A3C; }
+  .btn-ghost { background: transparent; color: #E5E7EB; border: 1px solid #1F2937; }
+  .btn-ghost:hover { background: #111827; border-color: #374151; }
+  .btn-danger { background: transparent; color: #FCA5A5; border: 1px solid #7F1D1D; }
+  .btn-danger:hover { background: #450A0A; border-color: #B91C1C; color: #FECACA; }
+  .btn-ok { background: transparent; color: #6EE7B7; border: 1px solid #065F46; }
+  .btn-ok:hover { background: #064E3B; border-color: #047857; color: #A7F3D0; }
+  .btn-warn { background: transparent; color: #FCD34D; border: 1px solid #78350F; }
+  .btn-warn:hover { background: #451A03; border-color: #B45309; color: #FDE68A; }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .kpi { background: #0B0F14; border: 1px solid #1F2937; border-radius: 12px; padding: 14px 16px; position: relative; overflow: hidden; }
+  .kpi::after { content: ""; position: absolute; inset: 0 auto 0 0; width: 3px; background: linear-gradient(180deg, #FF6B1A, #FF8A3C); }
+  .toast { position: fixed; right: 20px; bottom: 20px; z-index: 80; display: flex; flex-direction: column; gap: 8px; max-width: 420px; }
+  .toast-item { border-radius: 10px; padding: 10px 14px; font: 500 13px/1.4 ui-sans-serif; border: 1px solid #1F2937; background: #111827; color: #F3F4F6; box-shadow: 0 12px 40px rgba(0,0,0,.4); animation: enter .2s ease; }
+  @keyframes enter { from { transform: translateY(8px); opacity: 0 } to { transform: none; opacity: 1 } }
+  .toast-item.ok { border-color: #065F46; }
+  .toast-item.bad { border-color: #7F1D1D; }
+  .toast-item.info { border-color: #1E40AF; }
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(3,7,13,.72); backdrop-filter: blur(4px); z-index: 60; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .modal { background: #0B0F14; border: 1px solid #1F2937; border-radius: 14px; width: 100%; max-width: 640px; max-height: 90vh; overflow: auto; }
+  .status-PENDIENTE { background: #78350F33; color: #FCD34D; border-color: #78350F; }
+  .status-CONFIRMADA { background: #065F4633; color: #6EE7B7; border-color: #065F46; }
+  .status-EN_USO { background: #1E40AF33; color: #93C5FD; border-color: #1E40AF; }
+  .status-FINALIZADA { background: #37415155; color: #D1D5DB; border-color: #4B5563; }
+  .status-CANCELADA { background: #7F1D1D33; color: #FCA5A5; border-color: #7F1D1D; }
+  .status-PAGADO { background: #065F4633; color: #6EE7B7; border-color: #065F46; }
+  .status-PAGADO_PARCIAL { background: #1E40AF33; color: #93C5FD; border-color: #1E40AF; }
+  .status-PENDIENTE-pago { background: #78350F33; color: #FCD34D; border-color: #78350F; }
+  .status-INGRESO { background: #065F4633; color: #6EE7B7; border-color: #065F46; }
+  .status-REGISTRADO { background: #37415155; color: #D1D5DB; border-color: #4B5563; }
+  table { width: 100%; border-collapse: collapse; }
+  th { font: 600 11px/1 ui-sans-serif; color: #94A3B8; text-transform: uppercase; letter-spacing: .04em; text-align: left; padding: 10px 12px; border-bottom: 1px solid #1F2937; background: #0B0F14; position: sticky; top: 0; z-index: 2; }
+  td { padding: 11px 12px; border-bottom: 1px solid #0F172A; font-size: 13.5px; color: #E5E7EB; }
+  .muted { color: #94A3B8; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 720px) { .grid-2 { grid-template-columns: 1fr; } }
+  .divider { height: 1px; background: #1F2937; width: 100%; }
+  .brand-accent { background: linear-gradient(90deg, #FF6B1A, #FFB347); -webkit-background-clip: text; background-clip: text; color: transparent; }
+</style>
+</head>
+<body class="font-sans antialiased">
+
+<!-- ========================================================= -->
+<!-- APP SHELL -->
+<!-- ========================================================= -->
+<div class="min-h-screen flex flex-col">
+
+  <!-- Top Nav -->
+  <header class="border-b border-line bg-panel">
+    <div class="px-5 h-14 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="h-8 w-8 rounded-lg bg-gradient-to-br from-accent to-accent2 flex items-center justify-center shadow-[0_0_24px_-4px_rgba(255,107,26,0.55)]">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0B0F14" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>
+        </div>
+        <div class="leading-tight">
+          <div class="text-[15px] font-bold tracking-tight">Sport<span class="brand-accent">Reserve</span></div>
+          <div class="text-[11px] muted">Gestión de reservas · escenarios deportivos</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="hidden md:flex items-center gap-2 px-3 h-9 rounded-lg border border-line bg-ink">
+          <span class="h-2 w-2 rounded-full bg-ok shadow-[0_0_12px_#10B981]"></span>
+          <span class="text-[12px] muted">API · <span class="mono text-slate-300" id="api-status">conectando…</span></span>
+        </div>
+        <button class="btn btn-ghost" id="btn-reload-all" title="Volver a cargar todo">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
+          Recargar
+        </button>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <nav class="px-5 flex gap-1.5 overflow-x-auto scrollbar-thin pb-2" id="tabs-nav">
+      <button class="tab-btn active rounded-lg px-3.5 py-2 text-[13px]" data-tab="dashboard">📊 Dashboard</button>
+      <button class="tab-btn rounded-lg px-3.5 py-2 text-[13px]" data-tab="personas">👥 Personas</button>
+      <button class="tab-btn rounded-lg px-3.5 py-2 text-[13px]" data-tab="escenarios">🏟️ Escenarios</button>
+      <button class="tab-btn rounded-lg px-3.5 py-2 text-[13px]" data-tab="reservas">📅 Reservas</button>
+      <button class="tab-btn rounded-lg px-3.5 py-2 text-[13px]" data-tab="participantes">🎟️ Participantes</button>
+      <button class="tab-btn rounded-lg px-3.5 py-2 text-[13px]" data-tab="pagos">💳 Pagos</button>
+      <button class="tab-btn rounded-lg px-3.5 py-2 text-[13px]" data-tab="ingresos">🎫 Ingresos</button>
+    </nav>
+  </header>
+
+  <!-- Content -->
+  <main class="flex-1 px-5 py-5 max-w-[1400px] w-full mx-auto">
+
+    <!-- ================= DASHBOARD ================= -->
+    <section class="section" id="s-dashboard">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+        <div class="kpi">
+          <div class="text-[11px] uppercase tracking-wider muted mb-1">Personas</div>
+          <div class="text-[28px] font-bold leading-none" id="kpi-personas">—</div>
+          <div class="text-[12px] muted mt-2">registradas en el sistema</div>
+        </div>
+        <div class="kpi">
+          <div class="text-[11px] uppercase tracking-wider muted mb-1">Escenarios</div>
+          <div class="text-[28px] font-bold leading-none" id="kpi-escenarios">—</div>
+          <div class="text-[12px] muted mt-2">deportivos disponibles</div>
+        </div>
+        <div class="kpi">
+          <div class="text-[11px] uppercase tracking-wider muted mb-1">Reservas totales</div>
+          <div class="text-[28px] font-bold leading-none" id="kpi-reservas">—</div>
+          <div class="text-[12px] muted mt-2" id="kpi-reservas-sub">histórico completo</div>
+        </div>
+        <div class="kpi">
+          <div class="text-[11px] uppercase tracking-wider muted mb-1">Ingresos totales</div>
+          <div class="text-[28px] font-bold leading-none mono" id="kpi-ingresos">$—</div>
+          <div class="text-[12px] muted mt-2" id="kpi-saldo">saldo pendiente: $—</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        <div class="panel rounded-xl p-4 lg:col-span-2">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h2 class="text-[15px] font-semibold">Próximas reservas</h2>
+              <p class="text-[12px] muted">Listado de reservas activas ordenadas por fecha y hora</p>
+            </div>
+            <button class="btn btn-primary" data-goto="reservas">Nueva reserva →</button>
+          </div>
+          <div class="rounded-lg border border-line overflow-hidden max-h-[420px] overflow-auto scrollbar-thin">
+            <table class="min-w-[720px]">
+              <thead><tr>
+                <th>ID</th><th>Fecha</th><th>Hora</th><th>Escenario</th><th>Responsable</th><th>Estado</th><th>$</th>
+              </tr></thead>
+              <tbody id="dash-reservas-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel rounded-xl p-4">
+          <div class="mb-3">
+            <h2 class="text-[15px] font-semibold">Acciones rápidas</h2>
+            <p class="text-[12px] muted">Atajos a operaciones frecuentes</p>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <button class="btn btn-ghost justify-center py-3 flex-col gap-1 !h-auto" data-goto="personas"><span class="text-xl">👤</span><span>Nueva persona</span></button>
+            <button class="btn btn-ghost justify-center py-3 flex-col gap-1 !h-auto" data-goto="escenarios"><span class="text-xl">🏟️</span><span>Nuevo escenario</span></button>
+            <button class="btn btn-ghost justify-center py-3 flex-col gap-1 !h-auto" data-goto="reservas"><span class="text-xl">📅</span><span>Crear reserva</span></button>
+            <button class="btn btn-ghost justify-center py-3 flex-col gap-1 !h-auto" data-goto="ingresos"><span class="text-xl">🎫</span><span>Registrar ingreso</span></button>
+          </div>
+
+          <div class="divider my-4"></div>
+
+          <h3 class="text-[13px] font-semibold mb-2">Leyenda de estados</h3>
+          <div class="space-y-1.5 text-[12.5px]">
+            <div class="flex items-center gap-2"><span class="chip status-PENDIENTE">PENDIENTE</span><span class="muted">Creada, sin confirmar</span></div>
+            <div class="flex items-center gap-2"><span class="chip status-CONFIRMADA">CONFIRMADA</span><span class="muted">Pagada / lista para usar</span></div>
+            <div class="flex items-center gap-2"><span class="chip status-EN_USO">EN_USO</span><span class="muted">Activa en este momento</span></div>
+            <div class="flex items-center gap-2"><span class="chip status-FINALIZADA">FINALIZADA</span><span class="muted">Culminada con éxito</span></div>
+            <div class="flex items-center gap-2"><span class="chip status-CANCELADA">CANCELADA</span><span class="muted">Cancelada lógicamente</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PERSONAS ================= -->
+    <section class="section hidden" id="s-personas">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h1 class="text-[18px] font-bold">👥 Personas</h1>
+          <p class="text-[12px] muted">Gestión de clientes y usuarios del sistema</p>
+        </div>
+        <button class="btn btn-primary" id="btn-new-persona">+ Nueva persona</button>
+      </div>
+      <div class="panel rounded-xl overflow-hidden">
+        <div class="p-3 flex items-center gap-2 border-b border-line">
+          <div class="relative flex-1 max-w-sm">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 muted" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+            <input id="persona-search" class="input !pl-9" placeholder="Buscar por nombre, cédula o correo…"/>
+          </div>
+          <button class="btn btn-ghost" id="btn-reload-personas">↻ Actualizar</button>
+        </div>
+        <div class="overflow-auto scrollbar-thin max-h-[60vh]">
+          <table class="min-w-[800px]">
+            <thead><tr>
+              <th>ID</th><th>Identificación</th><th>Nombre</th><th>Teléfono</th><th>Correo</th><th></th>
+            </tr></thead>
+            <tbody id="personas-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= ESCENARIOS ================= -->
+    <section class="section hidden" id="s-escenarios">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h1 class="text-[18px] font-bold">🏟️ Escenarios</h1>
+          <p class="text-[12px] muted">Canchas y escenarios deportivos (Fútbol · Microfútbol · Baloncesto · Voleibol)</p>
+        </div>
+        <button class="btn btn-primary" id="btn-new-escenario">+ Nuevo escenario</button>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3" id="escenarios-grid"></div>
+    </section>
+
+    <!-- ================= RESERVAS ================= -->
+    <section class="section hidden" id="s-reservas">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h1 class="text-[18px] font-bold">📅 Reservas</h1>
+          <p class="text-[12px] muted">Gestión completa del ciclo de vida de cada reserva</p>
+        </div>
+        <div class="flex gap-2">
+          <select id="reserva-filter" class="select !w-auto">
+            <option value="">Todos los estados</option>
+            <option value="PENDIENTE">PENDIENTE</option>
+            <option value="CONFIRMADA">CONFIRMADA</option>
+            <option value="EN_USO">EN_USO</option>
+            <option value="FINALIZADA">FINALIZADA</option>
+            <option value="CANCELADA">CANCELADA</option>
+          </select>
+          <button class="btn btn-primary" id="btn-new-reserva">+ Nueva reserva</button>
+        </div>
+      </div>
+      <div class="panel rounded-xl overflow-hidden">
+        <div class="overflow-auto scrollbar-thin max-h-[70vh]">
+          <table class="min-w-[1200px]">
+            <thead><tr>
+              <th>ID</th><th>Fecha</th><th>Hora</th><th>Escenario</th><th>Responsable</th><th>Rol Resp.</th><th>Jug.</th><th>Estado</th><th>Pago</th><th>Acciones</th>
+            </tr></thead>
+            <tbody id="reservas-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PARTICIPANTES ================= -->
+    <section class="section hidden" id="s-participantes">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h1 class="text-[18px] font-bold">🎟️ Participantes por reserva</h1>
+          <p class="text-[12px] muted">Agrega o elimina jugadores y espectadores. Valida capacidad del escenario.</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        <div class="panel rounded-xl p-4">
+          <div class="label">Selecciona una reserva</div>
+          <select id="sel-participacion-reserva" class="select">
+            <option value="">— cargando reservas —</option>
+          </select>
+          <div class="mt-3 rounded-lg border border-line p-3 bg-ink" id="info-reserva-participacion">
+            <div class="text-[12px] muted">Selecciona una reserva para ver su información</div>
+          </div>
+          <div class="mt-3 space-y-2">
+            <button class="btn btn-primary w-full justify-center" id="btn-add-participante">+ Agregar participante</button>
+          </div>
+        </div>
+        <div class="panel rounded-xl lg:col-span-2 overflow-hidden">
+          <div class="p-3 border-b border-line flex items-center justify-between">
+            <div>
+              <h3 class="text-[14px] font-semibold">Participantes registrados</h3>
+              <p class="text-[12px] muted"><span id="count-jugadores">0</span> jugadores · <span id="count-espectadores">0</span> espectadores</p>
+            </div>
+            <button class="btn btn-ghost" id="btn-reload-participantes">↻ Actualizar</button>
+          </div>
+          <div class="overflow-auto scrollbar-thin max-h-[60vh]">
+            <table class="min-w-[680px]">
+              <thead><tr>
+                <th>Persona</th><th>Identificación</th><th>Rol</th><th>Estado ingreso</th><th>Fecha/Hora ingreso</th><th></th>
+              </tr></thead>
+              <tbody id="participantes-body">
+                <tr><td colspan="6" class="text-center py-10 muted">Selecciona una reserva de la izquierda</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PAGOS ================= -->
+    <section class="section hidden" id="s-pagos">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h1 class="text-[18px] font-bold">💳 Pagos</h1>
+          <p class="text-[12px] muted">Pagos parciales, pago completo y consulta de saldos (Efectivo · Nequi · Tarjeta · Transferencia)</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        <div class="panel rounded-xl p-4">
+          <div class="label">Selecciona una reserva</div>
+          <select id="sel-pago-reserva" class="select">
+            <option value="">— cargando reservas —</option>
+          </select>
+          <div class="mt-3">
+            <button class="btn btn-primary w-full justify-center" id="btn-register-pago">+ Registrar pago</button>
+          </div>
+        </div>
+        <div class="panel rounded-xl p-4 lg:col-span-2">
+          <h3 class="text-[14px] font-semibold mb-3">Detalle del pago</h3>
+          <div id="pago-detail" class="text-[13px] muted py-10 text-center">Selecciona una reserva de la izquierda</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= INGRESOS ================= -->
+    <section class="section hidden" id="s-ingresos">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h1 class="text-[18px] font-bold">🎫 Control de Ingresos</h1>
+          <p class="text-[12px] muted">Solo jugadores pueden ingresar. La reserva debe estar en CONFIRMADA o EN_USO.</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <div class="panel rounded-xl p-5">
+          <h3 class="text-[14px] font-semibold mb-4">Registrar ingreso</h3>
+          <div class="space-y-3">
+            <div>
+              <span class="label">Reserva</span>
+              <select id="sel-ingreso-reserva" class="select">
+                <option value="">— cargando reservas —</option>
+              </select>
+            </div>
+            <div>
+              <span class="label">ID de persona</span>
+              <input id="ingreso-persona-id" type="number" min="1" class="input" placeholder="ID numérico de la persona"/>
+            </div>
+            <button class="btn btn-primary w-full justify-center" id="btn-register-ingreso">Registrar ingreso</button>
+          </div>
+        </div>
+        <div class="panel rounded-xl p-5">
+          <h3 class="text-[14px] font-semibold mb-4">Últimos ingresos registrados</h3>
+          <div id="ingresos-history" class="space-y-2 text-[13px] muted">Aún no hay registros en esta sesión.</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="px-5 py-4 text-[12px] muted border-t border-line flex items-center justify-between">
+    <div>SportReserve · POO — Java 21 · Spring Boot 4.1.1 · H2 in-memory</div>
+    <div class="mono">v0.1 · Fase 11 OK</div>
+  </footer>
+</div>
+
+<!-- ========================================================= -->
+<!-- MODAL CONTAINER -->
+<!-- ========================================================= -->
+<div id="modal-root"></div>
+
+<!-- ========================================================= -->
+<!-- TOAST CONTAINER -->
+<!-- ========================================================= -->
+<div class="toast" id="toast-root"></div>
+
+<script>
+// =========================================================
+// API HELPERS
+// =========================================================
+const API = ""; // mismo origen (servido por Spring static resources)
+const money = n => {
+  if (n == null) return "$—";
+  const v = Number(n);
+  return "$" + v.toLocaleString("es-CO", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+const fmtDate = d => d ? new Date(d).toLocaleDateString("es-CO", { year:'numeric', month:'short', day:'2-digit' }) : "—";
+const fmtDateTime = d => d ? new Date(d).toLocaleString("es-CO", { dateStyle:"short", timeStyle:"short" }) : "—";
+
+async function api(path, opts={}) {
+  const url = `${API}${path}`;
+  const headers = { "Content-Type": "application/json", ...(opts.headers||{}) };
+  const res = await fetch(url, { ...opts, headers });
+  let data = null;
+  try { data = await res.json(); } catch {}
+  if (!res.ok) {
+    const msg = (data && data.message) ? data.message : `Error ${res.status}`;
+    throw new Error(msg);
+  }
+  return { status: res.status, data };
+}
+const get = p => api(p, { method:"GET" });
+const post = (p, body) => api(p, { method:"POST", body: JSON.stringify(body) });
+const put = (p, body) => body != null ? api(p, { method:"PUT", body: JSON.stringify(body) }) : api(p, { method:"PUT" });
+const del = p => api(p, { method:"DELETE" });
+
+function toast(msg, kind="info") {
+  const el = document.createElement("div");
+  el.className = `toast-item ${kind}`;
+  el.textContent = msg;
+  document.getElementById("toast-root").appendChild(el);
+  setTimeout(() => { el.style.transition = "opacity .25s, transform .25s"; el.style.opacity = 0; el.style.transform = "translateY(6px)"; }, 3200);
+  setTimeout(() => el.remove(), 3600);
+}
+
+// =========================================================
+// STATE
+// =========================================================
+const State = {
+  personas: [],
+  escenarios: [],
+  reservas: [],
+  ingresosHistory: [],
+  currentTab: "dashboard",
+  reservaParticipacionId: null,
+  reservaPagoId: null,
+  ingresoReservaId: null,
+  ingresosCache: {},
+};
+
+// =========================================================
+// TABS
+// =========================================================
+function showTab(name) {
+  State.currentTab = name;
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === name));
+  document.querySelectorAll(".section").forEach(s => {
+    const is = s.id === `s-${name}`;
+    s.classList.toggle("hidden", !is);
+    if (is) { requestAnimationFrame(() => s.classList.add("show")); }
+    else s.classList.remove("show");
+  });
+  if (name === "dashboard") loadDashboard();
+  if (name === "personas") loadPersonas();
+  if (name === "escenarios") loadEscenarios();
+  if (name === "reservas") loadReservas();
+  if (name === "participantes") loadParticipacionesSetup();
+  if (name === "pagos") loadPagosSetup();
+  if (name === "ingresos") loadIngresosSetup();
+}
+document.getElementById("tabs-nav").addEventListener("click", e => {
+  const t = e.target.closest(".tab-btn");
+  if (t) showTab(t.dataset.tab);
+});
+document.body.addEventListener("click", e => {
+  const gt = e.target.closest("[data-goto]");
+  if (gt) showTab(gt.dataset.goto);
+});
+
+// =========================================================
+// MODAL
+// =========================================================
+function modal({ title, bodyHTML, onMount, onSubmit, submitLabel = "Guardar", cancelLabel = "Cancelar", size }) {
+  const root = document.getElementById("modal-root");
+  const backdrop = document.createElement("div");
+  backdrop.className = "modal-backdrop";
+  backdrop.innerHTML = `<div class="modal ${size||""}">
+    <div class="p-5 border-b border-line flex items-center justify-between">
+      <h3 class="text-[15px] font-bold">${title}</h3>
+      <button class="btn btn-ghost !p-2" data-close="1" aria-label="Cerrar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="p-5">${bodyHTML}</div>
+    <div class="p-4 border-t border-line flex gap-2 justify-end">
+      <button class="btn btn-ghost" data-close="1">${cancelLabel}</button>
+      <button class="btn btn-primary" data-submit="1">${submitLabel}</button>
+    </div>
+  </div>`;
+  root.appendChild(backdrop);
+  const form = backdrop.querySelector("form") || null;
+  const getValues = () => {
+    if (!form) return {};
+    const data = {};
+    new FormData(form).forEach((v, k) => data[k] = v);
+    return data;
+  };
+  const close = () => { backdrop.remove(); };
+  backdrop.addEventListener("click", e => {
+    if (e.target === backdrop) close();
+    if (e.target.closest("[data-close]")) close();
+    if (e.target.closest("[data-submit]")) {
+      if (!onSubmit) return close();
+      const vals = getValues();
+      Promise.resolve(onSubmit(vals, close, backdrop)).catch(err => toast(err.message || String(err), "bad"));
+    }
+  });
+  if (onMount) onMount({ backdrop, form, close });
+  // focus primer input
+  requestAnimationFrame(() => {
+    const first = backdrop.querySelector("input, select, textarea");
+    if (first) first.focus();
+  });
+  return { close, backdrop, getValues };
+}
+
+// =========================================================
+// DASHBOARD
+// =========================================================
+async function loadDashboard() {
+  try {
+    const [p, e, r] = await Promise.all([
+      get("/api/personas").then(x => x.data),
+      get("/api/escenarios").then(x => x.data),
+      get("/api/reservas").then(x => x.data),
+    ]);
+    State.personas = p; State.escenarios = e; State.reservas = r;
+    document.getElementById("kpi-personas").textContent = p.length;
+    document.getElementById("kpi-escenarios").textContent = e.length;
+    document.getElementById("kpi-reservas").textContent = r.length;
+
+    const pagado = r.reduce((a,rv) => a + Number(rv.pago?.valorPagado || 0), 0);
+    const saldo = r.reduce((a,rv) => a + Number(rv.pago?.saldoPendiente || 0), 0);
+    document.getElementById("kpi-ingresos").textContent = money(pagado);
+    document.getElementById("kpi-saldo").textContent = `saldo pendiente: ${money(saldo)}`;
+
+    document.getElementById("kpi-reservas-sub").textContent =
+      `${r.filter(x=>x.estado==="PENDIENTE").length} PENDIENTE · ${r.filter(x=>x.estado==="CONFIRMADA").length} CONFIRMADA · ${r.filter(x=>x.estado==="EN_USO").length} EN USO`;
+
+    const sorted = [...r]
+      .filter(x => x.estado !== "CANCELADA" && x.estado !== "FINALIZADA")
+      .sort((a,b) => (a.fecha+a.horaInicio).localeCompare(b.fecha+b.horaInicio));
+    const tbody = document.getElementById("dash-reservas-body");
+    tbody.innerHTML = sorted.length ? sorted.map(rv => `
+      <tr class="row-hover">
+        <td class="mono">#${rv.id}</td>
+        <td>${fmtDate(rv.fecha)}</td>
+        <td class="mono">${rv.horaInicio} → ${rv.horaFin}</td>
+        <td>${rv.escenarioNombre || "—"} <span class="muted text-[11px]">· ${rv.tipoEscenario||""}</span></td>
+        <td>${rv.responsableNombre || "—"}</td>
+        <td><span class="chip status-${rv.estado}">${rv.estado}</span></td>
+        <td class="mono">${money(rv.pago?.valorTotal)}</td>
+      </tr>
+    `).join("") : `<tr><td colspan="7" class="text-center py-10 muted">No hay reservas activas. Crea la primera en la pestaña Reservas.</td></tr>`;
+
+    setApiStatus("OK", "ok");
+  } catch (err) {
+    toast(`Error cargando dashboard: ${err.message}`, "bad");
+    setApiStatus("error", "bad");
+  }
+}
+function setApiStatus(text, kind) {
+  const el = document.getElementById("api-status");
+  el.textContent = text;
+  el.style.color = kind === "ok" ? "#6EE7B7" : "#FCA5A5";
+}
+
+// =========================================================
+// PERSONAS
+// =========================================================
+async function loadPersonas() {
+  try {
+    const { data } = await get("/api/personas");
+    State.personas = data;
+    renderPersonas();
+  } catch (e) { toast(e.message, "bad"); setApiStatus("error", "bad"); }
+}
+function renderPersonas() {
+  const q = (document.getElementById("persona-search")?.value || "").toLowerCase();
+  const list = State.personas.filter(p =>
+    !q ||
+    (p.nombre||"").toLowerCase().includes(q) ||
+    (p.apellido||"").toLowerCase().includes(q) ||
+    (p.identificacion||"").toLowerCase().includes(q) ||
+    (p.correo||"").toLowerCase().includes(q)
+  );
+  const tb = document.getElementById("personas-body");
+  tb.innerHTML = list.length ? list.map(p => `
+    <tr class="row-hover">
+      <td class="mono">#${p.id}</td>
+      <td class="mono">${p.identificacion}</td>
+      <td><b>${p.nombre} ${p.apellido}</b></td>
+      <td class="mono">${p.telefono || "—"}</td>
+      <td class="muted">${p.correo}</td>
+      <td class="text-right"><button class="btn btn-ghost !p-2" data-persona-edit="${p.id}" title="Editar">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4Z"/></svg>
+      </button></td>
+    </tr>
+  `).join("") : `<tr><td colspan="6" class="text-center py-10 muted">No hay personas que coincidan con la búsqueda.</td></tr>`;
+}
+document.getElementById("persona-search").addEventListener("input", renderPersonas);
+document.getElementById("btn-reload-personas").addEventListener("click", loadPersonas);
+document.getElementById("btn-reload-all").addEventListener("click", loadDashboard);
+document.getElementById("personas-body").addEventListener("click", e => {
+  const id = e.target.closest("[data-persona-edit]")?.dataset.personaEdit;
+  if (id) { const p = State.personas.find(x => x.id == id); openPersonaModal(p); }
+});
+document.getElementById("btn-new-persona").addEventListener("click", () => openPersonaModal(null));
+
+function openPersonaModal(p) {
+  const v = p || { identificacion:"", nombre:"", apellido:"", telefono:"", correo:"" };
+  modal({
+    title: p ? `Editar persona · ${v.nombre} ${v.apellido}` : "Nueva persona",
+    submitLabel: p ? "Guardar cambios" : "Crear persona",
+    bodyHTML: `<form class="space-y-3" onsubmit="event.preventDefault()">
+      <div class="grid-2">
+        <div><span class="label">Identificación *</span><input required name="identificacion" maxlength="20" class="input" value="${v.identificacion||""}"/></div>
+        <div><span class="label">Teléfono</span><input name="telefono" maxlength="15" class="input" value="${v.telefono||""}"/></div>
+        <div><span class="label">Nombre *</span><input required name="nombre" maxlength="50" class="input" value="${v.nombre||""}"/></div>
+        <div><span class="label">Apellido *</span><input required name="apellido" maxlength="50" class="input" value="${v.apellido||""}"/></div>
+      </div>
+      <div><span class="label">Correo electrónico *</span><input required type="email" name="correo" class="input" value="${v.correo||""}"/></div>
+    </form>`,
+    onSubmit: async (vals, close) => {
+      if (!vals.identificacion || !vals.nombre || !vals.apellido || !vals.correo) throw new Error("Campos obligatorios vacíos");
+      if (p) {
+        const { data } = await put(`/api/personas/${p.id}`, vals);
+        toast(`Persona actualizada: ${data.nombre} ${data.apellido}`, "ok");
+      } else {
+        const { data } = await post("/api/personas", vals);
+        toast(`Persona creada #${data.id}: ${data.nombre} ${data.apellido}`, "ok");
+      }
+      close();
+      loadPersonas();
+      if (State.currentTab === "dashboard") loadDashboard();
+    }
+  });
+}
+
+// =========================================================
+// ESCENARIOS
+// =========================================================
+async function loadEscenarios() {
+  try {
+    const { data } = await get("/api/escenarios");
+    State.escenarios = data;
+    renderEscenarios();
+  } catch (e) { toast(e.message, "bad"); }
+}
+const escenarioIcon = t => ({FUTBOL:"⚽", MICROFUTBOL:"🥅", BALONCESTO:"🏀", VOLEIBOL:"🏐"}[t] || "🏟️");
+function renderEscenarios() {
+  const grid = document.getElementById("escenarios-grid");
+  if (!State.escenarios.length) {
+    grid.innerHTML = `<div class="col-span-full text-center py-12 panel rounded-xl muted">Aún no hay escenarios. Crea el primero.</div>`;
+    return;
+  }
+  grid.innerHTML = State.escenarios.map(e => `
+    <div class="panel rounded-xl p-5">
+      <div class="flex items-start justify-between mb-3">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-[28px] leading-none">${escenarioIcon(e.tipo)}</span>
+            <span class="chip" style="background:#0E141B;color:#FFB347;border-color:#7C2D12">${e.tipo}</span>
+          </div>
+          <div class="text-[17px] font-bold leading-tight">${e.nombre}</div>
+        </div>
+        <button class="btn btn-ghost !p-2" data-esc-edit="${e.id}" title="Editar">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        </button>
+      </div>
+      <div class="divider my-3"></div>
+      <div class="flex items-center justify-between text-[13px]">
+        <span class="muted">Precio/hora</span><span class="mono font-semibold">${money(e.precioPorHora)}</span>
+      </div>
+      <div class="flex items-center justify-between text-[13px] mt-1.5">
+        <span class="muted">Capacidad jugadores</span><span class="mono font-semibold">${e.capacidadJugadores} pers.</span>
+      </div>
+      <div class="flex items-center justify-between text-[13px] mt-1.5">
+        <span class="muted">ID</span><span class="mono">#${e.id}</span>
+      </div>
+    </div>
+  `).join("");
+}
+document.getElementById("escenarios-grid").addEventListener("click", e => {
+  const id = e.target.closest("[data-esc-edit]")?.dataset.escEdit;
+  if (id) { const esc = State.escenarios.find(x => x.id == id); openEscenarioModal(esc); }
+});
+document.getElementById("btn-new-escenario").addEventListener("click", () => openEscenarioModal(null));
+
+function openEscenarioModal(e) {
+  const v = e || { nombre:"", tipo:"FUTBOL", precioPorHora:"", capacidadJugadores:"" };
+  modal({
+    title: e ? `Editar escenario · ${v.nombre}` : "Nuevo escenario deportivo",
+    submitLabel: e ? "Guardar cambios" : "Crear escenario",
+    bodyHTML: `<form class="space-y-3" onsubmit="event.preventDefault()">
+      <div><span class="label">Nombre *</span><input required name="nombre" class="input" value="${v.nombre||""}" placeholder="Ej: Cancha Central La Esperanza"/></div>
+      <div class="grid-2">
+        <div><span class="label">Tipo de escenario *</span>
+          <select required name="tipo" class="select">
+            ${["FUTBOL","MICROFUTBOL","BALONCESTO","VOLEIBOL"].map(t =>
+              `<option value="${t}" ${t===v.tipo?"selected":""}>${t[0]+t.slice(1).toLowerCase()}</option>`).join("")}
+          </select>
+        </div>
+        <div><span class="label">Precio por hora (COP) *</span><input required min="1" step="1" name="precioPorHora" type="number" class="input" value="${v.precioPorHora||""}"/></div>
+      </div>
+      <div><span class="label">Capacidad de jugadores *</span><input required min="1" step="1" name="capacidadJugadores" type="number" class="input" value="${v.capacidadJugadores||""}"/></div>
+    </form>`,
+    onSubmit: async (vals, close) => {
+      const body = {
+        nombre: vals.nombre,
+        tipo: vals.tipo,
+        precioPorHora: Number(vals.precioPorHora),
+        capacidadJugadores: Number(vals.capacidadJugadores),
+      };
+      if (!body.nombre || body.precioPorHora <= 0 || body.capacidadJugadores <= 0) throw new Error("Valores inválidos");
+      if (e) { await put(`/api/escenarios/${e.id}`, body); toast("Escenario actualizado", "ok"); }
+      else { const {data} = await post("/api/escenarios", body); toast(`Escenario creado #${data.id}`, "ok"); }
+      close();
+      loadEscenarios();
+    }
+  });
+}
+
+// =========================================================
+// RESERVAS
+// =========================================================
+async function loadReservas() {
+  try {
+    const { data } = await get("/api/reservas");
+    State.reservas = data;
+    renderReservas();
+  } catch (e) { toast(e.message, "bad"); }
+}
+document.getElementById("reserva-filter").addEventListener("change", renderReservas);
+
+function renderReservas() {
+  const f = document.getElementById("reserva-filter").value;
+  const list = State.reservas.filter(r => !f || r.estado === f);
+  const tb = document.getElementById("reservas-body");
+  tb.innerHTML = list.length ? list.map(r => {
+    const pag = r.pago || {};
+    const jCount = (r.participantes||[]).filter(p => p.rol === "JUGADOR").length;
+    return `<tr class="row-hover">
+      <td class="mono">#${r.id}</td>
+      <td>${fmtDate(r.fecha)}</td>
+      <td class="mono">${r.horaInicio} → ${r.horaFin}</td>
+      <td>${r.escenarioNombre || "—"} <span class="muted text-[11px]">· ${r.tipoEscenario||""}</span></td>
+      <td>${r.responsableNombre || "—"}</td>
+      <td><span class="chip ${r.rolResponsable==="JUGADOR"?"status-INGRESO":"status-REGISTRADO"}">${r.rolResponsable || "—"}</span></td>
+      <td class="mono">${jCount}</td>
+      <td><span class="chip status-${r.estado}">${r.estado}</span></td>
+      <td>
+        <span class="chip status-${pag.estado||"PENDIENTE"}${pag.estado==="PENDIENTE"?"-pago":""}">${pag.estado||"—"}</span>
+        <div class="text-[11px] mono muted mt-0.5">${money(pag.valorPagado||0)} / ${money(pag.valorTotal||0)}</div>
+      </td>
+      <td><div class="flex gap-1.5 justify-end flex-wrap">
+        ${r.estado==="PENDIENTE" ? `<button class="btn btn-warn !py-1.5 !px-2.5 text-[12px]" data-act="confirmar" data-id="${r.id}">Confirmar</button>`:""}
+        ${r.estado==="CONFIRMADA" ? `<button class="btn btn-ok !py-1.5 !px-2.5 text-[12px]" data-act="en-uso" data-id="${r.id}">En uso</button>`:""}
+        ${r.estado==="EN_USO" ? `<button class="btn btn-ok !py-1.5 !px-2.5 text-[12px]" data-act="finalizar" data-id="${r.id}">Finalizar</button>`:""}
+        ${(r.estado==="PENDIENTE"||r.estado==="CONFIRMADA") ? `<button class="btn btn-danger !py-1.5 !px-2.5 text-[12px]" data-act="cancelar" data-id="${r.id}">Cancelar</button>`:""}
+      </div></td>
+    </tr>`;
+  }).join("") : `<tr><td colspan="10" class="text-center py-10 muted">No hay reservas para este filtro.</td></tr>`;
+}
+document.getElementById("reservas-body").addEventListener("click", async e => {
+  const btn = e.target.closest("[data-act]");
+  if (!btn) return;
+  const { act, id } = btn.dataset;
+  try {
+    if (act === "cancelar") { await del(`/api/reservas/${id}`); toast(`Reserva #${id} cancelada`, "info"); }
+    if (act === "confirmar") { await put(`/api/reservas/${id}/confirmar`); toast(`Reserva #${id} CONFIRMADA`, "ok"); }
+    if (act === "en-uso") { await put(`/api/reservas/${id}/en-uso`); toast(`Reserva #${id} EN USO`, "ok"); }
+    if (act === "finalizar") { await put(`/api/reservas/${id}/finalizar`); toast(`Reserva #${id} FINALIZADA`, "ok"); }
+    loadReservas(); if (State.currentTab === "dashboard") loadDashboard();
+  } catch (err) { toast(err.message, "bad"); }
+});
+document.getElementById("btn-new-reserva").addEventListener("click", openReservaModal);
+
+function openReservaModal() {
+  const today = new Date();
+  const iso = today.toISOString().slice(0,10);
+  modal({
+    title: "Nueva reserva",
+    submitLabel: "Crear reserva",
+    bodyHTML: `<form class="space-y-3" onsubmit="event.preventDefault()" id="form-reserva">
+      <div class="grid-2">
+        <div><span class="label">Fecha *</span><input required type="date" min="${iso}" name="fecha" class="input" value="${iso}"/></div>
+        <div><span class="label">Rol del responsable</span>
+          <select name="rolResponsable" class="select">
+            <option value="">JUGADOR (default)</option>
+            <option value="JUGADOR">JUGADOR</option>
+            <option value="ESPECTADOR">ESPECTADOR</option>
+          </select>
+        </div>
+        <div><span class="label">Hora inicio *</span><input required type="time" name="horaInicio" class="input" value="10:00"/></div>
+        <div><span class="label">Hora fin *</span><input required type="time" name="horaFin" class="input" value="11:00"/></div>
+        <div><span class="label">Escenario *</span><select id="sel-r-escenario" required name="escenarioId" class="select"><option value="">…cargando</option></select></div>
+        <div><span class="label">Responsable *</span><select id="sel-r-persona" required name="responsableId" class="select"><option value="">…cargando</option></select></div>
+      </div>
+      <div id="r-summary" class="rounded-lg border border-line p-3 bg-ink text-[13px] muted">Completa los campos para ver el cálculo</div>
+    </form>`,
+    onMount: async ({ backdrop, getValues }) => {
+      const esc = State.escenarios.length ? State.escenarios : (await get("/api/escenarios")).data;
+      const per = State.personas.length ? State.personas : (await get("/api/personas")).data;
+      const sE = backdrop.querySelector("#sel-r-escenario");
+      sE.innerHTML = `<option value="">-- Selecciona un escenario --</option>` +
+        esc.map(e => `<option value="${e.id}" data-precio="${e.precioPorHora}" data-cap="${e.capacidadJugadores}" data-tipo="${e.tipo}">${escenarioIcon(e.tipo)} ${e.nombre} — ${money(e.precioPorHora)}/h</option>`).join("");
+      const sP = backdrop.querySelector("#sel-r-persona");
+      sP.innerHTML = `<option value="">-- Selecciona un responsable --</option>` +
+        per.map(p => `<option value="${p.id}">${p.nombre} ${p.apellido} — ${p.identificacion}</option>`).join("");
+      const updateSum = () => {
+        const vals = getValues();
+        const opt = sE.selectedOptions[0];
+        const t = backdrop.querySelector(`[name="horaInicio"]`).value;
+        const tf = backdrop.querySelector(`[name="horaFin"]`).value;
+        const s = backdrop.querySelector("#r-summary");
+        if (!opt || !t || !tf) { s.className = "rounded-lg border border-line p-3 bg-ink text-[13px] muted"; s.textContent = "Completa los campos para ver el cálculo"; return; }
+        const [hh1,mm1]=t.split(":").map(Number), [hh2,mm2]=tf.split(":").map(Number);
+        const mins = (hh2*60+mm2)-(hh1*60+mm1);
+        if (mins <= 0) { s.className = "rounded-lg border border-[#7F1D1D] p-3 bg-[#1F0A0A] text-[13px] text-red-300"; s.textContent = "❌ La hora de fin debe ser posterior a la de inicio"; return; }
+        const precio = Number(opt.dataset.precio);
+        const total = (precio * mins / 60);
+        s.className = "rounded-lg border border-[#065F46] p-3 bg-[#022C22] text-[13px]";
+        s.innerHTML = `<div class="flex items-center justify-between"><span class="muted">${mins} min · ${opt.dataset.tipo} · cap ${opt.dataset.cap} jug</span><span class="mono font-bold text-emerald-300">${money(total)}</span></div>`;
+      };
+      ["change","input"].forEach(ev => backdrop.addEventListener(ev, e => {
+        if (["fecha","horaInicio","horaFin","escenarioId","rolResponsable"].includes(e.target.name)) updateSum();
+      }));
+    },
+    onSubmit: async (vals, close) => {
+      if (!vals.escenarioId || !vals.responsableId) throw new Error("Escenario y responsable son obligatorios");
+      const body = {
+        fecha: vals.fecha,
+        horaInicio: vals.horaInicio,
+        horaFin: vals.horaFin,
+        escenarioId: Number(vals.escenarioId),
+        responsableId: Number(vals.responsableId),
+      };
+      if (vals.rolResponsable) body.rolResponsable = vals.rolResponsable;
+      const { data } = await post("/api/reservas", body);
+      toast(`Reserva #${data.id} creada · Estado PENDIENTE`, "ok");
+      close();
+      loadReservas();
+      if (State.currentTab === "dashboard") loadDashboard();
+    }
+  });
+}
+
+// =========================================================
+// PARTICIPANTES
+// =========================================================
+async function loadParticipacionesSetup() {
+  if (!State.reservas.length) await loadReservas();
+  if (!State.personas.length) await loadPersonas();
+  const sel = document.getElementById("sel-participacion-reserva");
+  const filt = State.reservas.filter(r => r.estado !== "CANCELADA" && r.estado !== "FINALIZADA");
+  sel.innerHTML = filt.length
+    ? `<option value="">-- Selecciona una reserva activa --</option>` +
+      filt.map(r => `<option value="${r.id}" ${State.reservaParticipacionId==r.id?"selected":""}>#${r.id} · ${fmtDate(r.fecha)} ${r.horaInicio}-${r.horaFin} · ${r.escenarioNombre||""} · ${r.estado}</option>`).join("")
+    : `<option value="">No hay reservas activas disponibles</option>`;
+  if (State.reservaParticipacionId) renderParticipantes(State.reservaParticipacionId);
+}
+document.getElementById("sel-participacion-reserva").addEventListener("change", e => {
+  State.reservaParticipacionId = e.target.value ? Number(e.target.value) : null;
+  if (State.reservaParticipacionId) renderParticipantes(State.reservaParticipacionId);
+});
+document.getElementById("btn-reload-participantes").addEventListener("click", () => {
+  if (State.reservaParticipacionId) renderParticipantes(State.reservaParticipacionId);
+});
+document.getElementById("btn-add-participante").addEventListener("click", () => {
+  if (!State.reservaParticipacionId) { toast("Selecciona una reserva", "bad"); return; }
+  const rid = State.reservaParticipacionId;
+  const rv = State.reservas.find(x=>x.id===rid);
+  modal({
+    title: `Agregar participante a reserva #${rid}`,
+    submitLabel: "Agregar",
+    bodyHTML: `<form class="space-y-3" onsubmit="event.preventDefault()">
+      <div><span class="label">Persona *</span>
+        <select required name="personaId" class="select">
+          <option value="">-- Selecciona --</option>
+          ${State.personas.map(p => `<option value="${p.id}">${p.nombre} ${p.apellido} — ${p.identificacion}</option>`).join("")}
+        </select>
+      </div>
+      <div><span class="label">Rol *</span>
+        <select required name="rol" class="select">
+          <option value="JUGADOR">JUGADOR (cuenta para capacidad)</option>
+          <option value="ESPECTADOR">ESPECTADOR (no cuenta para capacidad)</option>
+        </select>
+      </div>
+      <div class="rounded-lg border border-line p-3 bg-ink text-[12.5px] muted">ℹ️ Si el rol es JUGADOR se validará la capacidad máxima del escenario (${rv?.escenarioNombre||"—"} · cap ${(rv?.participantes||[]).filter(p=>p.rol==="JUGADOR").length} / ${rv?.tipoEscenario?buscarCapEscenario(rv):"—"})</div>
+    </form>`,
+    onSubmit: async (vals, close) => {
+      const body = { personaId: Number(vals.personaId), rol: vals.rol };
+      await post(`/api/reservas/${rid}/participantes`, body);
+      toast("Participante agregado", "ok");
+      close();
+      await loadReservas();
+      renderParticipantes(rid);
+    }
+  });
+});
+function buscarCapEscenario(rv) {
+  const e = State.escenarios.find(x => x.id === rv.escenarioId);
+  return e ? e.capacidadJugadores : "?";
+}
+async function renderParticipantes(rid) {
+  const info = document.getElementById("info-reserva-participacion");
+  const rv = (State.reservas.find(x => x.id === rid) || (await loadReservas(), State.reservas.find(x => x.id === rid)));
+  if (!rv) { info.innerHTML = `<div class="muted">Reserva no encontrada</div>`; return; }
+  const cap = buscarCapEscenario(rv);
+  const parts = rv.participantes || [];
+  const j = parts.filter(p => p.rol === "JUGADOR").length;
+  const s = parts.filter(p => p.rol === "ESPECTADOR").length;
+  info.innerHTML = `<div class="space-y-1.5">
+    <div class="flex justify-between"><span class="muted">Estado</span><span class="chip status-${rv.estado}">${rv.estado}</span></div>
+    <div class="flex justify-between"><span class="muted">Fecha</span><span>${fmtDate(rv.fecha)} · ${rv.horaInicio}-${rv.horaFin}</span></div>
+    <div class="flex justify-between"><span class="muted">Escenario</span><span>${rv.escenarioNombre||"—"}</span></div>
+    <div class="flex justify-between"><span class="muted">Jugadores</span><span class="mono ${j>cap?"text-red-400":""}">${j} / ${cap}</span></div>
+    <div class="flex justify-between"><span class="muted">Espectadores</span><span class="mono">${s}</span></div>
+  </div>`;
+  document.getElementById("count-jugadores").textContent = j;
+  document.getElementById("count-espectadores").textContent = s;
+
+  const tb = document.getElementById("participantes-body");
+  tb.innerHTML = parts.length ? parts.map(p => {
+    const responsableName = rv.responsableNombre || "";
+    const esResp = (p.nombreCompleto === responsableName) || (rv.participantes && rv.participantes.some(q => q.personaId === p.personaId && rv.responsableId === p.personaId)) || (rv.responsableId === p.personaId);
+    return `<tr class="row-hover">
+      <td><b>${p.nombreCompleto || "—"}</b>${esResp ? ` <span class="chip ml-1 status-CONFIRMADA">RESPONSABLE</span>`:""}</td>
+      <td class="mono">${p.identificacion || "—"}</td>
+      <td><span class="chip ${p.rol==="JUGADOR"?"status-INGRESO":"status-REGISTRADO"}">${p.rol}</span></td>
+      <td><span class="chip status-${p.estadoIngreso}">${p.estadoIngreso}</span></td>
+      <td class="mono">${p.fechaHoraIngreso ? fmtDateTime(p.fechaHoraIngreso) : "<span class='muted'>—</span>"}</td>
+      <td class="text-right">${esResp ? `<button disabled class="btn btn-ghost !p-2 !text-[11px] muted" title="No se puede eliminar al responsable">🚫 Resp.</button>`
+        : `<button class="btn btn-danger !p-2" data-del-part="${p.personaId}" title="Eliminar participante">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>`}</td>
+    </tr>`;
+  }).join("") : `<tr><td colspan="6" class="text-center py-10 muted">Esta reserva no tiene participantes agregados aún (solo el responsable).</td></tr>`;
+  // bind delete
+  tb.querySelectorAll("[data-del-part]").forEach(b => b.addEventListener("click", async () => {
+    const pid = Number(b.dataset.delPart);
+    try {
+      await del(`/api/reservas/${rid}/participantes/${pid}`);
+      toast(`Participante ${pid} eliminado`, "info");
+      await loadReservas();
+      renderParticipantes(rid);
+    } catch (e) { toast(e.message, "bad"); }
+  }));
+}
+
+// =========================================================
+// PAGOS
+// =========================================================
+async function loadPagosSetup() {
+  if (!State.reservas.length) await loadReservas();
+  const sel = document.getElementById("sel-pago-reserva");
+  const filt = State.reservas.filter(r => r.estado !== "CANCELADA" && r.estado !== "FINALIZADA");
+  sel.innerHTML = filt.length
+    ? `<option value="">-- Selecciona una reserva --</option>` +
+      filt.map(r => `<option value="${r.id}" ${State.reservaPagoId==r.id?"selected":""}>#${r.id} · ${fmtDate(r.fecha)} ${r.horaInicio}-${r.horaFin} · ${r.escenarioNombre||""} · ${r.estado}</option>`).join("")
+    : `<option value="">No hay reservas elegibles para pago</option>`;
+  if (State.reservaPagoId) renderPagoDetail(State.reservaPagoId);
+}
+document.getElementById("sel-pago-reserva").addEventListener("change", e => {
+  State.reservaPagoId = e.target.value ? Number(e.target.value) : null;
+  if (State.reservaPagoId) renderPagoDetail(State.reservaPagoId);
+  else document.getElementById("pago-detail").innerHTML = `<div class="text-center py-10 muted">Selecciona una reserva</div>`;
+});
+document.getElementById("btn-register-pago").addEventListener("click", () => {
+  if (!State.reservaPagoId) { toast("Selecciona una reserva", "bad"); return; }
+  const rid = State.reservaPagoId;
+  const rv = State.reservas.find(x=>x.id===rid);
+  const pend = rv?.pago?.saldoPendiente ?? 0;
+  if (Number(pend) <= 0) { toast("Esta reserva ya está pagada completamente", "info"); return; }
+  modal({
+    title: `Registrar pago · reserva #${rid}`,
+    submitLabel: "Aplicar pago",
+    bodyHTML: `<form class="space-y-3" onsubmit="event.preventDefault()">
+      <div class="rounded-lg border border-line p-3 bg-ink text-[13px]">
+        <div class="flex justify-between"><span class="muted">Total</span><span class="mono">${money(rv.pago.valorTotal)}</span></div>
+        <div class="flex justify-between"><span class="muted">Pagado</span><span class="mono">${money(rv.pago.valorPagado)}</span></div>
+        <div class="flex justify-between mt-1 border-t border-line pt-1"><span class="muted">Saldo pendiente</span><span class="mono font-bold text-amber-300">${money(rv.pago.saldoPendiente)}</span></div>
+      </div>
+      <div class="grid-2">
+        <div><span class="label">Método de pago *</span>
+          <select required name="metodoPago" class="select">
+            <option value="EFECTIVO">💵 Efectivo</option>
+            <option value="NEQUI">📱 Nequi</option>
+            <option value="TARJETA">💳 Tarjeta</option>
+            <option value="TRANSFERENCIA">🏦 Transferencia</option>
+          </select>
+        </div>
+        <div><span class="label">Valor a pagar (COP) *</span><input required type="number" step="1" min="1" name="valorPagado" class="input" placeholder="Máx ${rv.pago.saldoPendiente}"/></div>
+      </div>
+    </form>`,
+    onSubmit: async (vals, close) => {
+      const monto = Number(vals.valorPagado);
+      if (monto <= 0) throw new Error("Valor inválido");
+      if (monto > Number(pend)) throw new Error(`Valor supera el saldo pendiente ${money(pend)}`);
+      const { data } = await post(`/api/reservas/${rid}/pagos`, { valorPagado: monto, metodoPago: vals.metodoPago });
+      toast(`Pago aplicado · ${vals.metodoPago} · ${money(monto)}`, "ok");
+      close();
+      await loadReservas();
+      renderPagoDetail(rid);
+      if (State.currentTab === "dashboard") loadDashboard();
+    }
+  });
+});
+async function renderPagoDetail(rid) {
+  const wrap = document.getElementById("pago-detail");
+  let rv = State.reservas.find(x=>x.id===rid);
+  if (!rv || !rv.pago) { try { const d = (await get(`/api/reservas/${rid}/pagos`)).data; rv = { pago: d }; } catch(e) { wrap.innerHTML = `<div class="text-center py-10 text-red-300">${e.message}</div>`; return; } }
+  const p = rv.pago;
+  const pct = p.valorTotal ? (Number(p.valorPagado) / Number(p.valorTotal)) * 100 : 0;
+  wrap.innerHTML = `
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+      <div class="kpi !py-3 !px-4"><div class="muted text-[11px] uppercase">Total</div><div class="mono text-[20px] font-bold">${money(p.valorTotal)}</div></div>
+      <div class="kpi !py-3 !px-4"><div class="muted text-[11px] uppercase">Pagado</div><div class="mono text-[20px] font-bold text-emerald-300">${money(p.valorPagado)}</div></div>
+      <div class="kpi !py-3 !px-4"><div class="muted text-[11px] uppercase">Saldo</div><div class="mono text-[20px] font-bold text-amber-300">${money(p.saldoPendiente)}</div></div>
+      <div class="kpi !py-3 !px-4"><div class="muted text-[11px] uppercase">Estado</div><div class="text-[17px] font-bold"><span class="chip status-${p.estado}${p.estado==='PENDIENTE'?'-pago':''}">${p.estado}</span></div></div>
+    </div>
+    <div class="rounded-lg border border-line overflow-hidden">
+      <div class="h-2.5 bg-[#111827]"><div class="h-full bg-gradient-to-r from-accent to-accent2" style="width:${pct}%;transition:width .3s"></div></div>
+      <div class="p-3 flex items-center justify-between text-[12.5px]">
+        <span class="muted">${pct.toFixed(1)}% cubierto</span>
+        <span class="mono">${p.metodoPago ? `Último método: ${p.metodoPago}` : "Sin pagos aún"}</span>
+      </div>
+    </div>`;
+}
+
+// =========================================================
+// INGRESOS
+// =========================================================
+async function loadIngresosSetup() {
+  if (!State.reservas.length) await loadReservas();
+  const sel = document.getElementById("sel-ingreso-reserva");
+  const filt = State.reservas.filter(r => r.estado === "CONFIRMADA" || r.estado === "EN_USO");
+  sel.innerHTML = filt.length
+    ? `<option value="">-- Reservas CONFIRMADA / EN_USO --</option>` +
+      filt.map(r => `<option value="${r.id}" ${State.ingresoReservaId==r.id?"selected":""}>#${r.id} · ${fmtDate(r.fecha)} ${r.horaInicio}-${r.horaFin} · ${r.escenarioNombre||""} · ${r.estado}</option>`).join("")
+    : `<option value="">No hay reservas elegibles (requiere CONFIRMADA o EN_USO)</option>`;
+}
+document.getElementById("btn-register-ingreso").addEventListener("click", async () => {
+  const rid = Number(document.getElementById("sel-ingreso-reserva").value);
+  const pid = Number(document.getElementById("ingreso-persona-id").value);
+  if (!rid || !pid) { toast("Selecciona reserva y escribe el ID de la persona", "bad"); return; }
+  try {
+    const { data } = await post(`/api/reservas/${rid}/ingresos`, { personaId: pid });
+    const rv = (State.reservas.find(x=>x.id===rid) || {});
+    const row = {
+      reserva: rid,
+      escenario: rv.escenarioNombre || "—",
+      nombre: data.nombreCompleto || `#${data.personaId}`,
+      rol: data.rol,
+      estado: data.estadoIngreso,
+      fechaHora: data.fechaHoraIngreso,
+    };
+    State.ingresosHistory.unshift(row);
+    renderIngresosHistory();
+    toast(`✅ Ingreso registrado: ${row.nombre} (${data.rol})`, "ok");
+    document.getElementById("ingreso-persona-id").value = "";
+  } catch (e) { toast(e.message, "bad"); }
+});
+function renderIngresosHistory() {
+  const el = document.getElementById("ingresos-history");
+  if (!State.ingresosHistory.length) { el.innerHTML = `<div class="text-[13px] muted py-6 text-center">Aún no hay registros en esta sesión.</div>`; return; }
+  el.innerHTML = State.ingresosHistory.slice(0, 30).map(r => `
+    <div class="rounded-lg border border-line p-3 bg-ink flex items-center gap-3">
+      <div class="h-9 w-9 rounded-lg bg-gradient-to-br from-accent/80 to-accent2 flex items-center justify-center text-[#0B0F14] font-bold">${String(r.reserva)}</div>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2"><b class="truncate">${r.nombre}</b><span class="chip ${r.rol==='JUGADOR'?'status-INGRESO':'status-REGISTRADO'}">${r.rol}</span></div>
+        <div class="text-[11.5px] muted mono">#${r.reserva} · ${r.escenario} · ${fmtDateTime(r.fechaHora)}</div>
+      </div>
+      <span class="chip status-${r.estado}">${r.estado}</span>
+    </div>
+  `).join("");
+}
+
+// =========================================================
+// BOOT
+// =========================================================
+showTab("dashboard");
+// cargar todo inicial
+loadDashboard();
+</script>
+</body>
+</html>

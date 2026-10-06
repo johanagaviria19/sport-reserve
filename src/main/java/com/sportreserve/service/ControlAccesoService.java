@@ -53,6 +53,11 @@ public class ControlAccesoService {
                     String.format("No se permite el ingreso. Reserva en estado %s", reserva.getEstado()));
         }
 
+        if (participacion.haIngresado()) {
+            throw new IngresoNoPermitidoException(
+                    String.format("La persona %s ya registró ingreso en esta reserva", persona.getId()));
+        }
+
         participacion.registrarIngreso();
         participacionReservaRepository.save(participacion);
 

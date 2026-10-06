@@ -35,6 +35,21 @@ public class ReservaController {
         return ResponseEntity.ok(reservaService.listarTodos());
     }
 
+    @PutMapping("/{id}/confirmar")
+    public ResponseEntity<ReservaResponse> confirmar(@PathVariable Long id) {
+        return ResponseEntity.ok(reservaService.confirmar(id));
+    }
+
+    @PutMapping("/{id}/en-uso")
+    public ResponseEntity<ReservaResponse> marcarEnUso(@PathVariable Long id) {
+        return ResponseEntity.ok(reservaService.marcarEnUso(id));
+    }
+
+    @PutMapping("/{id}/finalizar")
+    public ResponseEntity<ReservaResponse> finalizarReserva(@PathVariable Long id) {
+        return ResponseEntity.ok(reservaService.finalizar(id));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> cancelar(@PathVariable Long id) {
         reservaService.cancelar(id);
